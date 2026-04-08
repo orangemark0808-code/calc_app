@@ -104,7 +104,6 @@ const _themes = [
 
 // bgVivid値とテーマカラーでテキスト色を返す
 Color _textColor(double bgVivid, Color themeColor, {double opacity = 1.0}) {
-  // ビビッド（0.6以上）→白、パステル→テーマカラーを暗くした色
   final base = bgVivid >= 0.6
       ? Colors.white
       : HSLColor.fromColor(themeColor)
@@ -196,7 +195,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
         if (_firstOperand != null && _operator != null && !_waitingForSecond) {
           final second = double.tryParse(_displayResult) ?? 0;
           final res    = _calc(_firstOperand!, _operator!, second);
-          _expression    = '${_fmtForExpr(_firstOperand!)} $_operator ${_fmtForExpr(second)} =';
+          _expression    = '$_expression ${_fmtForExpr(second)} =';
           _displayResult = _fmt(res);
           _firstOperand  = null;
           _operator      = null;
@@ -209,7 +208,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
           final res    = _calc(_firstOperand!, _operator!, second);
           _displayResult = _fmt(res);
           _firstOperand  = res;
-          _expression    = '${_fmtForExpr(res)} $label';
+          _expression    = '$_expression ${_fmtForExpr(second)} $label';
         } else {
           _firstOperand = double.tryParse(_displayResult) ?? 0;
           _expression   = '${_fmtForExpr(_firstOperand!)} $label';
@@ -227,9 +226,12 @@ class _CalculatorPageState extends State<CalculatorPage> {
           _waitingForSecond = false;
         } else {
           if (label == '.' && _displayResult.contains('.')) return;
-          _displayResult = (_displayResult == '0' && label != '.')
+          final next = (_displayResult == '0' && label != '.')
               ? label
               : _displayResult + label;
+          final digits = next.replaceAll('-', '').replaceAll('.', '').length;
+          if (digits > 16) return;
+          _displayResult = next;
         }
       }
     });
@@ -245,12 +247,23 @@ class _CalculatorPageState extends State<CalculatorPage> {
     }
   }
 
-  String _fmt(double n) {
+String _fmt(double n) {
     if (n.isNaN || n.isInfinite) return 'Error';
-    if (n == n.truncateToDouble() && n.abs() < 1e15) {
+    // 16桁以上は指数表示
+ if (n.abs() >= 1e16) {
+      final exp = n.toStringAsExponential(6);
+      final parts = exp.split('e');
+      final mantissa = parts[0].replaceAll(RegExp(r'\.?0+$'), '');
+      return '${mantissa}e${parts[1]}';
+    }
+    if (n == n.truncateToDouble()) {
       return n.toInt().toString();
     }
-    return n.toString();
+    // 小数点以下の不要なゼロを除去
+    final s = n.toStringAsFixed(10)
+        .replaceAll(RegExp(r'0+$'), '')
+        .replaceAll(RegExp(r'\.$'), '');
+    return s;
   }
 
   String _fmtForExpr(double n) => _fmt(n);
@@ -268,7 +281,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
       body: SafeArea(
         child: Column(
           children: [
-Padding(
+            Padding(
               padding: const EdgeInsets.fromLTRB(8, 4, 4, 0),
               child: Row(
                 children: [
@@ -591,7 +604,7 @@ class _TimeCalcPageState extends State<TimeCalcPage> {
     final funcColor = widget.funcColor;
     final funcFg    = widget.funcFg;
 
-final primaryTxt   = _textColor(widget.bgVivid, widget.theme.bg);
+    final primaryTxt   = _textColor(widget.bgVivid, widget.theme.bg);
     final secondaryTxt = _textColor(widget.bgVivid, widget.theme.bg, opacity: 0.6);
     final nowBg        = _textColor(widget.bgVivid, widget.theme.bg).withOpacity(0.15);
 
@@ -698,7 +711,7 @@ final primaryTxt   = _textColor(widget.bgVivid, widget.theme.bg);
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
-const cols    = 3;
+                const cols    = 3;
                 const spacing = 10.0;
                 final btnW = (constraints.maxWidth - spacing * (cols - 1)) / cols;
                 const rows = 4;
@@ -712,7 +725,7 @@ const cols    = 3;
                   ['00', '0', '⌫'],
                 ];
 
-return Column(
+                return Column(
                   children: keys.map((row) {
                     return Expanded(
                       child: Row(
