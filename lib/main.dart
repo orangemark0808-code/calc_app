@@ -268,26 +268,28 @@ class _CalculatorPageState extends State<CalculatorPage> {
       body: SafeArea(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 4, 4, 0),
+Padding(
+              padding: const EdgeInsets.fromLTRB(8, 4, 4, 0),
               child: Row(
                 children: [
-                  _TabButton(
-                    label: '計算機',
-                    selected: _tabIndex == 0,
-                    onTap: () => setState(() => _tabIndex = 0),
-                    selectedColor: Colors.white,
-                    unselectedColor: Colors.white38,
+                  Expanded(
+                    child: _TabButton(
+                      label: '計算機',
+                      selected: _tabIndex == 0,
+                      onTap: () => setState(() => _tabIndex = 0),
+                      selectedColor: Colors.white,
+                      unselectedColor: Colors.white38,
+                    ),
                   ),
-                  const SizedBox(width: 8),
-                  _TabButton(
-                    label: '時間計算',
-                    selected: _tabIndex == 1,
-                    onTap: () => setState(() => _tabIndex = 1),
-                    selectedColor: Colors.white,
-                    unselectedColor: Colors.white38,
+                  Expanded(
+                    child: _TabButton(
+                      label: '時間計算',
+                      selected: _tabIndex == 1,
+                      onTap: () => setState(() => _tabIndex = 1),
+                      selectedColor: Colors.white,
+                      unselectedColor: Colors.white38,
+                    ),
                   ),
-                  const Spacer(),
                   IconButton(
                     icon: const Icon(Icons.settings, color: Colors.white, size: 28),
                     onPressed: _openSettings,
@@ -696,11 +698,11 @@ final primaryTxt   = _textColor(widget.bgVivid, widget.theme.bg);
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
-                const cols    = 3;
-                const spacing = 6.0;
-                final btnW = (constraints.maxWidth - spacing * (cols - 1)) / cols * 0.88;
+const cols    = 3;
+                const spacing = 10.0;
+                final btnW = (constraints.maxWidth - spacing * (cols - 1)) / cols;
                 const rows = 4;
-                final btnH = (constraints.maxHeight - spacing * (rows - 1)) / rows * 0.88;
+                final btnH = (constraints.maxHeight - spacing * (rows - 1)) / rows;
                 final btnSize = btnW < btnH ? btnW : btnH;
 
                 final keys = [
@@ -710,24 +712,38 @@ final primaryTxt   = _textColor(widget.bgVivid, widget.theme.bg);
                   ['00', '0', '⌫'],
                 ];
 
-                return Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+return Column(
                   children: keys.map((row) {
-                    return Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: row.map((key) {
-                        final isFunc = key == '⌫';
-                        return _CircleButton(
-                          data: _BtnData(
-                            label: key,
-                            bg: isFunc ? funcColor : numColor,
-                            fg: isFunc ? funcFg : Colors.white,
-                            bold: true,
-                          ),
-                          onTap: _onKey,
-                          size: btnSize,
-                        );
-                      }).toList(),
+                    return Expanded(
+                      child: Row(
+                        children: row.map((key) {
+                          final isFunc = key == '⌫';
+                          return Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.all(3.0),
+                              child: Material(
+                                color: isFunc ? funcColor : numColor,
+                                borderRadius: BorderRadius.circular(12),
+                                elevation: 2,
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(12),
+                                  onTap: () => _onKey(key),
+                                  child: Center(
+                                    child: Text(
+                                      key,
+                                      style: TextStyle(
+                                        color: isFunc ? funcFg : Colors.white,
+                                        fontSize: btnSize * 0.28,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
                     );
                   }).toList(),
                 );
