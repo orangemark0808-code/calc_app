@@ -19,7 +19,6 @@ class MyApp extends StatelessWidget {
 
 class CalcTheme {
   final String name;
-  final String group; // 'orange' | 'other'
   final Color bg;
   final Color numBtn;
   final Color funcBtn;
@@ -28,7 +27,6 @@ class CalcTheme {
   final Color opFg;
   const CalcTheme({
     required this.name,
-    this.group = 'other',
     required this.bg,
     required this.numBtn,
     required this.funcBtn,
@@ -39,9 +37,8 @@ class CalcTheme {
 }
 
 const _themes = [
-  // ── オレンジグループ ──
   CalcTheme(
-    name: 'オレンジ', group: 'orange',
+    name: 'オレンジ',
     bg:      Color(0xFFFF8C00),
     numBtn:  Color(0xFFCC6600),
     funcBtn: Color(0xFFFFB347),
@@ -49,52 +46,6 @@ const _themes = [
     opBtn:   Colors.white,
     opFg:    Color(0xFFFF8C00),
   ),
-  CalcTheme(
-    name: 'サンセット', group: 'orange',
-    bg:      Color(0xFFFF5722),
-    numBtn:  Color(0xFFBF360C),
-    funcBtn: Color(0xFFFF8A65),
-    funcFg:  Color(0xFFBF360C),
-    opBtn:   Colors.white,
-    opFg:    Color(0xFFFF5722),
-  ),
-  CalcTheme(
-    name: 'マンゴー', group: 'orange',
-    bg:      Color(0xFFFFB300),
-    numBtn:  Color(0xFFFF6F00),
-    funcBtn: Color(0xFFFFD54F),
-    funcFg:  Color(0xFFFF6F00),
-    opBtn:   Colors.white,
-    opFg:    Color(0xFFFF6F00),
-  ),
-  CalcTheme(
-    name: 'キャロット', group: 'orange',
-    bg:      Color(0xFFEF6C00),
-    numBtn:  Color(0xFFBF360C),
-    funcBtn: Color(0xFFFFCC80),
-    funcFg:  Color(0xFFBF360C),
-    opBtn:   Colors.white,
-    opFg:    Color(0xFFEF6C00),
-  ),
-  CalcTheme(
-    name: 'ピーチ', group: 'orange',
-    bg:      Color(0xFFFFAB91),
-    numBtn:  Color(0xFFE64A19),
-    funcBtn: Color(0xFFFFCCBC),
-    funcFg:  Color(0xFFE64A19),
-    opBtn:   Colors.white,
-    opFg:    Color(0xFFE64A19),
-  ),
-  CalcTheme(
-    name: 'バーント', group: 'orange',
-    bg:      Color(0xFFBF360C),
-    numBtn:  Color(0xFF870000),
-    funcBtn: Color(0xFFFF6E40),
-    funcFg:  Color(0xFF870000),
-    opBtn:   Colors.white,
-    opFg:    Color(0xFFBF360C),
-  ),
-  // ── その他カラー ──
   CalcTheme(
     name: 'レッド',
     bg:      Color(0xFFE53935),
@@ -296,9 +247,10 @@ class _CalculatorPageState extends State<CalculatorPage> {
     }
   }
 
-  String _fmt(double n) {
+String _fmt(double n) {
     if (n.isNaN || n.isInfinite) return 'Error';
-    if (n.abs() >= 1e16) {
+    // 16桁以上は指数表示
+ if (n.abs() >= 1e16) {
       final exp = n.toStringAsExponential(6);
       final parts = exp.split('e');
       final mantissa = parts[0].replaceAll(RegExp(r'\.?0+$'), '');
@@ -307,6 +259,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
     if (n == n.truncateToDouble()) {
       return n.toInt().toString();
     }
+    // 小数点以下の不要なゼロを除去
     final s = n.toStringAsFixed(10)
         .replaceAll(RegExp(r'0+$'), '')
         .replaceAll(RegExp(r'\.$'), '');
@@ -999,213 +952,148 @@ class _SettingsSheetState extends State<_SettingsSheet> {
     final funcColor = _blendBtn(t.funcBtn);
     final funcFg    = _blendBtn(t.funcFg);
 
-    // オレンジグループとその他に分ける
-    final orangeThemes = _themes.where((t) => t.group == 'orange').toList();
-    final otherThemes  = _themes.where((t) => t.group != 'orange').toList();
-
     return SafeArea(
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── ミニプレビュー ──
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                decoration: BoxDecoration(
-                  color: bgColor,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    const Text('プレビュー',
-                        style: TextStyle(color: Colors.white54, fontSize: 11)),
-                    const SizedBox(height: 6),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _miniBtn('AC', funcColor, funcFg),
-                        _miniBtn('%',  funcColor, funcFg),
-                        _miniBtn('÷',  t.opBtn,   t.opFg),
-                        _miniBtn('7',  numColor,  Colors.white),
-                        _miniBtn('8',  numColor,  Colors.white),
-                        _miniBtn('=',  t.opBtn,   t.opFg),
-                      ],
-                    ),
-                  ],
-                ),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              decoration: BoxDecoration(
+                color: bgColor,
+                borderRadius: BorderRadius.circular(16),
               ),
-              const SizedBox(height: 20),
-
-              // ── オレンジセクション ──
-              Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  const Text('🍊 オレンジ',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFF8C00),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Text('6種類',
-                        style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                  const Text('プレビュー',
+                      style: TextStyle(color: Colors.white54, fontSize: 11)),
+                  const SizedBox(height: 6),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _miniBtn('AC', funcColor, funcFg),
+                      _miniBtn('%',  funcColor, funcFg),
+                      _miniBtn('÷',  t.opBtn,   t.opFg),
+                      _miniBtn('7',  numColor,  Colors.white),
+                      _miniBtn('8',  numColor,  Colors.white),
+                      _miniBtn('=',  t.opBtn,   t.opFg),
+                    ],
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 10,
-                runSpacing: 12,
-                children: orangeThemes.map((t) {
-                  final isSelected = t.name == _selectedTheme.name;
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() => _selectedTheme = t);
-                      widget.onThemeChanged(t);
-                    },
-                    child: Column(
-                      children: [
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: t.bg,
-                            shape: BoxShape.circle,
-                            border: isSelected
-                                ? Border.all(color: Colors.black, width: 3)
-                                : Border.all(color: Colors.black12, width: 1),
-                            boxShadow: const [
-                              BoxShadow(color: Colors.black26, blurRadius: 4),
-                            ],
-                          ),
+            ),
+            const SizedBox(height: 20),
+            const Text('テーマカラー',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: _themes.map((t) {
+                final isSelected = t.name == _selectedTheme.name;
+                return GestureDetector(
+                  onTap: () {
+                    setState(() => _selectedTheme = t);
+                    widget.onThemeChanged(t);
+                  },
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: t.bg,
+                          shape: BoxShape.circle,
+                          border: isSelected
+                              ? Border.all(color: Colors.black, width: 3)
+                              : null,
+                          boxShadow: const [
+                            BoxShadow(color: Colors.black26, blurRadius: 4),
+                          ],
                         ),
-                        const SizedBox(height: 4),
-                        Text(t.name,
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                            )),
-                      ],
-                    ),
-                  );
-                }).toList(),
-              ),
-
-              const SizedBox(height: 20),
-
-              // ── その他カラー ──
-              const Text('テーマカラー',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
-              Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                children: otherThemes.map((t) {
-                  final isSelected = t.name == _selectedTheme.name;
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() => _selectedTheme = t);
-                      widget.onThemeChanged(t);
+                      ),
+                      const SizedBox(height: 4),
+                      Text(t.name,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                          )),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 24),
+            const Text('背景スタイル',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Text('パステル', style: TextStyle(fontSize: 14)),
+                Expanded(
+                  child: Slider(
+                    value: _bgVivid,
+                    min: 0.0,
+                    max: 1.0,
+                    divisions: 10,
+                    activeColor: _selectedTheme.bg,
+                    onChanged: (v) {
+                      setState(() => _bgVivid = v);
+                      widget.onBgVividChanged(v);
                     },
-                    child: Column(
-                      children: [
-                        Container(
-                          width: 56,
-                          height: 56,
-                          decoration: BoxDecoration(
-                            color: t.bg,
-                            shape: BoxShape.circle,
-                            border: isSelected
-                                ? Border.all(color: Colors.black, width: 3)
-                                : null,
-                            boxShadow: const [
-                              BoxShadow(color: Colors.black26, blurRadius: 4),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(t.name,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                            )),
-                      ],
-                    ),
-                  );
-                }).toList(),
-              ),
-
-              const SizedBox(height: 24),
-              const Text('背景スタイル',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  const Text('パステル', style: TextStyle(fontSize: 14)),
-                  Expanded(
-                    child: Slider(
-                      value: _bgVivid,
-                      min: 0.0,
-                      max: 1.0,
-                      divisions: 10,
-                      activeColor: _selectedTheme.bg,
-                      onChanged: (v) {
-                        setState(() => _bgVivid = v);
-                        widget.onBgVividChanged(v);
-                      },
-                    ),
                   ),
-                  const Text('ビビッド', style: TextStyle(fontSize: 14)),
-                ],
-              ),
-              const SizedBox(height: 8),
-              const Text('ボタンスタイル',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  const Text('パステル', style: TextStyle(fontSize: 14)),
-                  Expanded(
-                    child: Slider(
-                      value: _btnVivid,
-                      min: 0.0,
-                      max: 1.0,
-                      divisions: 10,
-                      activeColor: _selectedTheme.bg,
-                      onChanged: (v) {
-                        setState(() => _btnVivid = v);
-                        widget.onBtnVividChanged(v);
-                      },
-                    ),
-                  ),
-                  const Text('ビビッド', style: TextStyle(fontSize: 14)),
-                ],
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _selectedTheme.bg,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('閉じる',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
+                const Text('ビビッド', style: TextStyle(fontSize: 14)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            const Text('ボタンスタイル',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Text('パステル', style: TextStyle(fontSize: 14)),
+                Expanded(
+                  child: Slider(
+                    value: _btnVivid,
+                    min: 0.0,
+                    max: 1.0,
+                    divisions: 10,
+                    activeColor: _selectedTheme.bg,
+                    onChanged: (v) {
+                      setState(() => _btnVivid = v);
+                      widget.onBtnVividChanged(v);
+                    },
+                  ),
+                ),
+                const Text('ビビッド', style: TextStyle(fontSize: 14)),
+              ],
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _selectedTheme.bg,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: () => Navigator.pop(context),
+                child: const Text('閉じる',
+                    style: TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold)),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
