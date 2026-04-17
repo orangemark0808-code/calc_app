@@ -1,0 +1,9 @@
+flutter_native_splash:
+  color: "#FF8C00"
+  image: assets/ohana_splash.png
+
+  android_12:
+    color: "#FF8C00"
+    image: assets/ohana_splash.png
+
+  web: false

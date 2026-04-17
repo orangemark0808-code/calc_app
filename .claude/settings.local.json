@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter analyze *)",
+      "Bash(export PATH=\"$PATH:/mnt/c/flutter/bin\")",
+      "Read(//mnt/c/Users/antig/flutter/bin/**)",
+      "Read(//snap/bin/**)",
+      "Read(//usr/local/bin/**)",
+      "Bash(bash /mnt/c/flutter/bin/flutter analyze /mnt/c/Users/antig/calc_app/lib/main.dart)",
+      "Bash(python3 *)",
+      "Bash(convert --version)",
+      "Bash(ffmpeg -version)",
+      "Bash(node -e \"require\\('canvas'\\)\")",
+      "Read(//tmp/**)",
+      "Bash(npm list *)",
+      "Bash(npm install *)",
+      "Bash(node *)"
+    ]
+  }
+}
