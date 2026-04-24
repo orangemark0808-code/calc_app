@@ -1,0 +1,136 @@
+calc_app レビューおよび修正内容
+作成日: 2026-04-23
+
+【レビュー概要】
+対象ファイル:
+- lib/main.dart
+- ios/Runner/Info.plist
+
+レビューでは、広告 SDK 導入に関する実害のある問題を確認した。
+
+【重要度: Critical】
+問題なし。
+
+【重要度: High】
+1. Google Mobile Ads を非モバイル環境でも初期化している
+該当箇所:
+- lib/main.dart
+
+問題内容:
+- google_mobile_ads は Android / iOS 向けの実装であり、web / windows / linux / macos ではそのまま使えない。
+- main() で常に MobileAds.instance.initialize() を呼び、画面生成時にも BannerAd を作っていたため、非モバイル実行時に MissingPluginException や UnsupportedError が発生する可能性があった。
+
+修正方針:
+- Android のときだけ広告 SDK を初期化し、バナー広告も生成するように変更する。
+
+2. iOS の AdMob App ID 未設定
+該当箇所:
+- ios/Runner/Info.plist
+
+問題内容:
+- iOS では GADApplicationIdentifier が必要だが、Info.plist に未設定だった。
+- この状態で iOS 側の広告初期化を行うと、広告リクエスト失敗や初期化エラーの原因になる。
+
+対応内容:
+- 今回は正しい iOS App ID をコードベースから確定できなかったため、iOS では広告初期化を行わない安全側の修正を採用した。
+- そのため Info.plist は今回は未変更。
+
+【重要度: Medium】
+1. updateRequestConfiguration() の await 漏れ
+該当箇所:
+- lib/main.dart
+
+問題内容:
+- updateRequestConfiguration() は Future<void> を返すが、完了を待たずに initialize() を呼んでいた。
+- その結果、初回広告リクエスト時にテスト端末設定が間に合わない競合が起きる可能性があった。
+
+修正方針:
+- await MobileAds.instance.updateRequestConfiguration(...) の完了後に await MobileAds.instance.initialize() を呼ぶように順序を保証する。
+
+2. 広告コールバック内の setState() が dispose 後に走る可能性
+該当箇所:
+- lib/main.dart
+
+問題内容:
+- バナー広告のロード完了や失敗コールバックが、画面破棄後に返る可能性がある。
+- その状態で setState() を呼ぶと、setState() called after dispose() の実行時エラーになる。
+
+修正方針:
+- コールバック内で mounted を確認し、破棄済みなら setState() を呼ばないようにする。
+
+【重要度: Low】
+問題なし。
+
+【今回行った修正】
+変更ファイル:
+- lib/main.dart
+
+修正内容:
+1. Flutter の foundation を import
+- kIsWeb と defaultTargetPlatform を使うために import 'package:flutter/foundation.dart'; を追加。
+
+2. 広告有効条件を定義
+- _supportsBannerAds を追加。
+- 条件は「Web ではない」かつ「Android」であること。
+- これにより、非モバイル環境および iOS では広告 SDK を触らないようにした。
+
+3. main() の広告初期化を条件付きに変更
+- _supportsBannerAds が true のときだけ広告 SDK を初期化。
+- updateRequestConfiguration() を await してから initialize() を await するように変更。
+
+4. initState() のバナー読み込みを条件付きに変更
+- Android のときだけ _loadBanner() を呼ぶように変更。
+
+5. 広告コールバックに mounted ガードを追加
+- onAdLoaded
+- onAdFailedToLoad
+- どちらも !mounted の場合は setState() を実行しないように変更。
+
+【バックアップ】
+変更前ファイルは以下に退避済み:
+- backup_before_admob_fix_20260423/lib/main.dart
+
+【未対応事項】
+1. iOS 広告の有効化
+- iOS で広告を有効にするには、AdMob 管理画面の iOS App ID を確認し、ios/Runner/Info.plist に GADApplicationIdentifier を追加する必要がある。
+- その上で、広告有効条件に iOS を含める修正が必要。
+
+2. 静的解析の未実行
+- flutter analyze lib/main.dart を試行したが、この環境では Flutter スクリプトの改行コード問題により実行できなかった。
+- エラー内容:
+- /mnt/c/flutter/bin/internal/shared.sh: line 5: $'\\r': command not found
+
+【補足】
+今回の修正は「安全に壊れない状態に戻す」ことを優先した。
+そのため、iOS で未設定の広告機能を無理に有効化せず、Android のみで動作する形に限定している。
+
+【iOS App ID の反映手順】
+1. AdMob 管理画面で iOS 用の App ID を確認する
+- 形式は以下のような文字列:
+- ca-app-pub-XXXXXXXXXXXXXXX~YYYYYYYYYY
+- バナー広告ユニット ID とは別物なので混同しないこと。
+
+2. ios/Runner/Info.plist に GADApplicationIdentifier を追加する
+- 追加場所は <dict> の中であればよい。
+- 例:
+
+<key>GADApplicationIdentifier</key>
+<string>ca-app-pub-XXXXXXXXXXXXXXX~YYYYYYYYYY</string>
+
+3. lib/main.dart の広告有効条件に iOS を含める
+- 現在は Android のみ広告有効としている。
+- iOS も有効にする場合は、_supportsBannerAds の条件を Android または iOS に変更する。
+
+変更例:
+
+final bool _supportsBannerAds = !kIsWeb &&
+    (defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.iOS);
+
+4. iOS 実機またはシミュレータで起動確認する
+- 起動時に MobileAds の初期化エラーが出ないことを確認する。
+- バナー広告の読み込み失敗時はデバッグログを確認する。
+
+5. テスト広告で検証する
+- 本番広告ユニットを使う場合でも、開発中はテスト端末設定を維持する。
+- 初回リクエストがテスト扱いになっていることを確認してから本番運用に進む。

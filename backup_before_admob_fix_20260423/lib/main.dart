@@ -1,19 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 const _bannerAdUnitId = 'ca-app-pub-7476242367380285/1764094728';
-final bool _supportsBannerAds =
-    !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  if (_supportsBannerAds) {
-    await MobileAds.instance.updateRequestConfiguration(
-      RequestConfiguration(testDeviceIds: ['5251E4B4D2323520DAA19D4B23CE08A5']),
-    );
-    await MobileAds.instance.initialize();
-  }
+  MobileAds.instance.updateRequestConfiguration(
+    RequestConfiguration(testDeviceIds: ['5251E4B4D2323520DAA19D4B23CE08A5']),
+  );
+  await MobileAds.instance.initialize();
   runApp(const MyApp());
 }
 
@@ -186,9 +181,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
   @override
   void initState() {
     super.initState();
-    if (_supportsBannerAds) {
-      _loadBanner();
-    }
+    _loadBanner();
   }
 
   void _loadBanner() {
@@ -197,18 +190,10 @@ class _CalculatorPageState extends State<CalculatorPage> {
       size: AdSize.banner,
       request: const AdRequest(),
       listener: BannerAdListener(
-        onAdLoaded: (_) {
-          if (!mounted) {
-            return;
-          }
-          setState(() => _isBannerLoaded = true);
-        },
+        onAdLoaded: (_) => setState(() => _isBannerLoaded = true),
         onAdFailedToLoad: (ad, error) {
           debugPrint('[AdMob] バナー広告の読み込み失敗: $error');
           ad.dispose();
-          if (!mounted) {
-            return;
-          }
           setState(() {
             _bannerAd = null;
             _isBannerLoaded = false;

@@ -1,4 +1,4 @@
-package com.example.calc_app
+package com.orangemania.calc_app
 
 import io.flutter.embedding.android.FlutterActivity
 
